@@ -44,11 +44,11 @@ const EditModal = ({ product, onClose }) => {
         onClose ? "" : "hidden"
       }`}
     >
-      {/* Modal overlay */}
+  
       <div className="modal-overlay absolute w-full h-full bg-gray-900 opacity-50"></div>
-      {/* Modal content */}
+     
       <div className="modal-container bg-white w-11/12 md:max-w-md mx-auto rounded shadow-lg z-50 overflow-y-auto">
-        {/* Form to edit the product */}
+     
         <form className="py-4 px-8">
           <h1 className="text-2xl font-bold mb-4">Edit Product</h1>
           <div className="mb-4">
@@ -67,7 +67,7 @@ const EditModal = ({ product, onClose }) => {
               className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
             />
           </div>
-          {/* Add other input fields for editing other properties */}
+        
           <div className="mb-4">
             <label
               className="block text-gray-700 text-sm font-bold mb-2"
@@ -205,15 +205,15 @@ const Products = () => {
   };
   const handleDelete = async (productId) => {
     try {
-      // Display alert before deletion
+      
       const confirmDelete = window.confirm('Are you sure you want to delete this product?');
       if (!confirmDelete) {
-        return; // Do nothing if the user cancels deletion
+        return; 
       }
   
       await axios.delete(`http://localhost:9000/api/product/delete/${productId}`);
   
-      // After successful deletion, you may want to fetch the updated data
+   
     
     } catch (error) {
       console.error('Error deleting item:', error.message, error.stack);
@@ -247,11 +247,16 @@ const Products = () => {
               <td className="py-2 px-4 border-b">{product.stock}</td>
               <td className="py-2 px-4 border-b">{product.condition}</td>
               <td className="py-2 px-4 border-b">
-                <img
-                  src={`http://localhost:9000/uploads/product/${product.productImage}`}
-                  alt={product.name}
-                  className="h-10 w-10 object-cover rounded-full"
-                />
+              {product.productImage && product.productImage.length > 0 ? (
+  <img
+    src={`http://localhost:9000/uploads/product/${product.productImage[0]}`}
+    alt="Product"
+    className="rounded-full w-16 h-16 object-cover"
+  />
+) : (
+  <p>No images available</p>
+)}
+
               </td>
               <td className="py-2 px-4 border-b">
                 <button
@@ -268,7 +273,7 @@ const Products = () => {
           ))}
         </tbody>
 
-        {/* Render the EditModal if the modal is open */}
+       
         {isEditModalOpen && (
           <EditModal product={selectedProduct} onClose={closeEditModal} />
         )}

@@ -2,7 +2,7 @@ import React, { useState, Fragment } from "react";
 import Dashboard from "./Dashboard";
 import Users from "./User";
 import Products from "./Product";
-import edit from "./Edit";
+import edit from "./Add";
 
 
 

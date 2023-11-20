@@ -1,35 +1,204 @@
-
-import { Fragment, useState } from 'react'
-import { Dialog, Transition } from '@headlessui/react'
-import { Bars3Icon, MagnifyingGlassIcon, ShoppingBagIcon, XMarkIcon } from '@heroicons/react/24/outline'
-import Pr from './Product'
-import T from './Banner'
-import H from './Categories'
+import { Fragment, useState, useEffect, useRef } from "react";
+import { Dialog, Transition } from "@headlessui/react";
+import {
+  Bars3Icon,
+  MagnifyingGlassIcon,
+  ShoppingBagIcon,
+  XMarkIcon,
+  UserCircleIcon,
+} from "@heroicons/react/24/outline";
+import Pr from "./Product";
+import T from "./Banner";
+import H from "./Categories";
+import Axios from "axios";
+import { data } from "autoprefixer";
+import { Link, useNavigate } from "react-router-dom";
 
 const navigation = {
-  categories: [
-    // ... (unchanged)
-  ],
+  categories: [],
   pages: [
-    { name: 'Company', href: '#' },
-    { name: 'Stores', href: '#' },
+    { name: "Company", href: "#" },
+    { name: "Stores", href: "#" },
   ],
-}
-
+};
 
 function classNames(...classes) {
-  return classes.filter(Boolean).join(' ')
+  return classes.filter(Boolean).join(" ");
 }
 
+// ... (your existing imports)
+
+// ... (your existing imports)
+
 export default function Example() {
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(false);
+  const [loggedIn, setLoggedIn] = useState(false);
+  const [cart, setCart] = useState([]);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [cartModalOpen, setCartModalOpen] = useState(false);
+
+  const cancelButtonRef = useRef(null);
+  const [user, setUser] = useState("");
+  const nav = useNavigate();
+
+  // After successful login
+  useEffect(() => {
+    if (localStorage.getItem("Token") === null) {
+      navigate("/login");
+    } else {
+      setUser(JSON.parse(localStorage.getItem("Token")));
+    }
+  }, []);
+
+  useEffect(() => {
+    const authToken = localStorage.getItem("Token");
+    setLoggedIn(!!authToken);
+
+    if (loggedIn) {
+      // Fetch details for each product in the cart
+      const fetchProductDetails = async (productId) => {
+        try {
+          const response = await Axios.get(
+            `http://localhost:9000/api/product/single/${productId}`
+          );
+          return response.data; // Assuming your API response contains the product details
+        } catch (error) {
+          console.error(
+            `Error fetching product data for product ID ${productId}:`,
+            error
+          );
+          return null;
+        }
+      };
+
+      // Fetch the seller's ID from local storage
+      const sellerId = JSON.parse(localStorage.getItem("Seller"))._id;
+
+      // Fetch cart data using Axios
+      Axios.get(`http://localhost:9000/api/cart/viewSingle/${sellerId}`, {
+        headers: {
+          Token: authToken,
+        },
+      })
+        .then(async (response) => {
+          // Fetch details for each product in the cart
+          const cartWithDetails = await Promise.all(
+            response.data.map(async (cartItem) => {
+              if (
+                cartItem.product_id &&
+                typeof cartItem.product_id === "string"
+              ) {
+                // Check if product_id is defined and is a string
+                const productDetails = await fetchProductDetails(
+                  cartItem.product_id
+                );
+                if (productDetails) {
+                  return { ...cartItem, productDetails };
+                } else {
+                  console.error(
+                    `Product details are not available for product ID ${cartItem.product_id}`
+                  );
+                  return null;
+                }
+              } else {
+                console.error("Invalid product ID for cart item:", cartItem);
+                return null;
+              }
+            })
+          );
+
+          // Filter out items with invalid product IDs or no product details
+          const validCartItems = cartWithDetails.filter(
+            (item) => item !== null
+          );
+
+          setCart(validCartItems);
+        })
+        .catch((error) => {
+          console.error("Error fetching cart data:", error);
+        });
+    }
+  }, [loggedIn]);
+
+  const closeMobileMenu = () => {
+    setMobileMenuOpen(false);
+  };
+
+  const openCartModal = () => {
+    setCartModalOpen(true);
+  };
+
+  const closeCartModal = () => {
+    setCartModalOpen(false);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("Token");
+    localStorage.removeItem("Seller");
+    setLoggedIn(false);
+    nav("/login");
+  };
+  const deleteCartItem = async (cartItemId) => {
+    try {
+      // Make a DELETE request to your server
+      const response = await Axios.delete(
+        `http://localhost:9000/api/cart/removecart/${cartItemId}`
+      );
+
+      if (response.status === 200) {
+        // Successfully deleted
+        console.log(`Cart item with ID ${cartItemId} deleted successfully`);
+        // Update your UI or state as needed
+      } else {
+        console.error(`Failed to delete cart item with ID ${cartItemId}`);
+      }
+    } catch (error) {
+      console.error(`Error deleting cart item with ID ${cartItemId}:`, error);
+    }
+  };
+
+  const [pendingSellers, setPendingSellers] = useState([]);
+  const [approvalStatus, setApprovalStatus] = useState("unknown"); // Default status
+
+  useEffect(() => {
+    const fetchPendingSellers = async () => {
+      try {
+        const response = await Axios.get(
+          "http://localhost:9000/api/register/admin/approve-seller"
+        );
+        setPendingSellers(response.data);
+      } catch (error) {
+        console.error("Error fetching seller requests", error);
+      }
+    };
+
+    fetchPendingSellers();
+  }, []);
+
+  const userId = JSON.parse(localStorage.getItem("Seller"))._id;
+
+  useEffect(() => {
+    const fetchApprovalStatus = async () => {
+      try {
+        const response = await Axios.get(
+          `http://localhost:9000/api/register/view-status/${userId}`
+        );
+        setApprovalStatus(response.data.approvalStatus);
+      } catch (error) {
+        console.error("Error fetching user status", error);
+        setApprovalStatus("unknown");
+      }
+    };
+
+    fetchApprovalStatus();
+  }, [userId]);
 
   return (
     <>
       <div className="bg-white">
         {/* Mobile menu */}
-        <Transition.Root show={open} as={Fragment}>
-          <Dialog as="div" className="relative z-40 lg:hidden" onClose={setOpen}>
+        <Transition.Root show={mobileMenuOpen} as={Fragment}>
+          <Dialog as="div" className="relative z-40 " onClose={closeMobileMenu}>
             <Transition.Child
               as={Fragment}
               enter="transition-opacity ease-linear duration-300"
@@ -57,36 +226,89 @@ export default function Example() {
                   <div className="space-y-6 border-t border-gray-200 px-4 py-6">
                     {navigation.pages.map((page) => (
                       <div key={page.name} className="flow-root">
-                        <a href={page.href} className="-m-2 block p-2 font-medium text-gray-900">
+                        <a
+                          href={page.href}
+                          className="-m-2 block p-2 font-medium text-gray-900"
+                        >
                           {page.name}
                         </a>
                       </div>
                     ))}
                   </div>
 
-                  <div className="space-y-6 border-t border-gray-200 px-4 py-6">
-                    <div className="flow-root">
-                      <a href="#" className="-m-2 block p-2 font-medium text-gray-900">
-                        Sign in
-                      </a>
-                    </div>
-                    <div className="flow-root">
-                      <a href="#" className="-m-2 block p-2 font-medium text-gray-900">
-                        Create account
-                      </a>
-                    </div>
-                  </div>
+                  <div>
+                    <button
+                      onClick={() => setOpen(!open)}
+                      className="flex text-sm font-medium text-gray-700 hover:text-gray-800 focus:outline-none"
+                    >
+                      <div className="h-6 w-6" aria-hidden="true" />
+                      <br />
+                    </button>
 
-                  <div className="border-t border-gray-200 px-4 py-6">
-                    <a href="#" className="-m-2 flex items-center p-2">
-                      <img
-                        src="https://tailwindui.com/img/flags/flag-canada.svg"
-                        alt=""
-                        className="block h-auto w-5 flex-shrink-0"
-                      />
-                      <span className="ml-3 block text-sm font-medium text-gray-900">CAD</span>
-                      <span className="sr-only">, change currency</span>
-                    </a>
+                    {loggedIn ? (
+                      <div style={{ display: "flex", alignItems: "center" }}>
+                        <button
+                          onClick={() => setOpen(!open)}
+                          className="flex text-sm font-medium text-gray-700 hover:text-gray-800 focus:outline-none"
+                        >
+                          <div className="h-6 w-6" aria-hidden="true" />
+                          <br />
+                        </button>
+                        <div style={{ marginTop: "-26px" }}>
+                          <div className="py-1">
+                            <span className="ml-4">
+                              <Link to="/manage-account" className=" ">
+                                Manage Account
+                              </Link>
+                            </span>
+                          </div>
+
+                          <div className="py-2 ">
+                            {approvalStatus === "approved" ? (
+                              // Render seller page content here
+                              <span className="ml-4">
+                                <Link to="/admin" className=" ">
+                                  Seller page
+                                </Link>
+                              </span>
+                            ) : approvalStatus === "pending" ? (
+                              // Render waiting for approval message
+
+                              <span className="ml-4">Waiting for Approval</span>
+                            ) : (
+                              // Handle other status values as needed
+                              <span className="ml-4">rejected</span>
+                            )}
+                          </div>
+
+                          <div className="py-2">
+                            <span
+                              style={{
+                                marginRight: "20px",
+                                padding: "15px",
+                                paddingTop: "0px",
+                              }}
+                            >
+                              <button onClick={handleLogout} className=" ">
+                                Logout
+                                <div className="h-4 w-4 inline-block ml-1" />
+                              </button>
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <button onClick={() => nav("/login")} className=" ">
+                        Login
+                      </button>
+                    )}
+                    <div className="py-2 pl-5">
+                      <span className="ml-4">
+                        <Link to="/adminlogin" className=" ">
+                          Admin Login
+                        </Link>
+                      </span>
+                    </div>
                   </div>
                 </Dialog.Panel>
               </Transition.Child>
@@ -99,17 +321,20 @@ export default function Example() {
             Get free delivery on orders over $100
           </p>
 
-          <nav aria-label="Top" className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <nav
+            aria-label="Top"
+            className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8"
+          >
             <div className="border-b border-gray-200">
               <div className="flex h-16 items-center">
                 <button
                   type="button"
-                  className="relative rounded-md bg-white p-2 text-gray-400 lg:hidden"
-                  onClick={() => setOpen(true)}
+                  className="relative rounded-md bg-white p-2 text-gray-400 lg:show"
+                  onClick={() => setMobileMenuOpen(true)}
                 >
                   <span className="absolute -inset-0.5" />
                   <span className="sr-only">Open menu</span>
-                  <Bars3Icon className="h-6 w-6" aria-hidden="true" />
+                  <UserCircleIcon className="h-6 w-6" aria-hidden="true" />
                 </button>
 
                 {/* Logo */}
@@ -125,44 +350,126 @@ export default function Example() {
                 </div>
 
                 <div className="ml-auto flex items-center">
-                  <div className="hidden lg:flex lg:flex-1 lg:items-center lg:justify-end lg:space-x-6">
-                    <a href="#" className="text-sm font-medium text-gray-700 hover:text-gray-800">
-                      Sign in
-                    </a>
-                    <span className="h-6 w-px bg-gray-200" aria-hidden="true" />
-                    <a href="#" className="text-sm font-medium text-gray-700 hover:text-gray-800">
-                      Create account
-                    </a>
-                  </div>
-
                   <div className="hidden lg:ml-8 lg:flex">
-                    <a href="#" className="flex items-center text-gray-700 hover:text-gray-800">
+                    <a
+                      href="#"
+                      className="flex items-center text-gray-700 hover:text-gray-800"
+                    >
                       <img
                         src="https://tailwindui.com/img/flags/flag-canada.svg"
                         alt=""
-                        className="block h-auto w-5 flex-shrink-0"
+                        className="block h-auto w-5 fl  ex-shrink-0"
                       />
-                      <span className="ml-3 block text-sm font-medium">CAD</span>
+                      <span className="ml-3 block text-sm font-medium">
+                        CAD
+                      </span>
                       <span className="sr-only">, change currency</span>
                     </a>
                   </div>
 
-                  {/* Search */}
-                  <div className="flex lg:ml-6">
-                    <a href="#" className="p-2 text-gray-400 hover:text-gray-500">
-                      <span className="sr-only">Search</span>
-                      <MagnifyingGlassIcon className="h-6 w-6" aria-hidden="true" />
-                    </a>
-                  </div>
-
                   {/* Cart */}
+                  <Transition.Root show={cartModalOpen} as={Fragment}>
+                    <Dialog
+                      as="div"
+                      className="fixed inset-0 overflow-y-auto"
+                      onClose={closeCartModal}
+                      initialFocus={cancelButtonRef}
+                    >
+                      <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                        {/* Background overlay */}
+                        <Transition.Child
+                          as={Fragment}
+                          enter="ease-out duration-300"
+                          enterFrom="opacity-0"
+                          enterTo="opacity-100"
+                          leave="ease-in duration-200"
+                          leaveFrom="opacity-100"
+                          leaveTo="opacity-0"
+                        >
+                          <Dialog.Overlay className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+                        </Transition.Child>
+
+                        {/* Modal Panel */}
+                        <Transition.Child
+                          as={Fragment}
+                          enter="ease-out duration-300"
+                          enterFrom="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                          enterTo="opacity-100 translate-y-0 sm:scale-100"
+                          leave="ease-in duration-200"
+                          leaveFrom="opacity-100 translate-y-0 sm:scale-100"
+                          leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                        >
+                          <div className="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
+                            {/* Close button */}
+                            <div className="hidden sm:block absolute top-0 right-0 pt-4 pr-4">
+                              <button
+                                type="button"
+                                className="text-gray-400 hover:text-gray-500"
+                                onClick={closeCartModal}
+                              >
+                                <XMarkIcon
+                                  className="h-6 w-6"
+                                  aria-hidden="true"
+                                />
+                                <span className="sr-only">Close</span>
+                              </button>
+                            </div>
+
+                            {/* Modal Content */}
+                            <div>
+                              <h3 className="text-lg leading-6 font-medium text-gray-900">
+                                Shopping Cart
+                              </h3>
+                              <div className="mt-2">
+                                {/* Display cart items here */}
+                                {cart.map((item) =>
+                                  item && item.productDetails ? (
+                                    <div
+                                      key={item._id}
+                                      className="flex justify-between items-center mt-4"
+                                    >
+                                      <div className="flex items-center">
+                                        <img
+                                          src={`http://localhost:9000/uploads/product/${item.productDetails.productImage[0]}`}
+                                          alt="Product"
+                                          className="h-8 w-8 object-cover rounded mr-2"
+                                        />
+                                        <span>{item.productDetails.name}</span>
+                                      </div>
+                                      <button
+                                        className="text-red-500 hover:text-red-700"
+                                        onClick={() =>
+                                          deleteCartItem(
+                                            item.productDetails._id
+                                          )
+                                        }
+                                      >
+                                        Remove
+                                      </button>
+                                    </div>
+                                  ) : null
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </Transition.Child>
+                      </div>
+                    </Dialog>
+                  </Transition.Root>
+
                   <div className="ml-4 flow-root lg:ml-6">
-                    <a href="#" className="group -m-2 flex items-center p-2">
+                    <a
+                      href="#"
+                      className="group -m-2 flex items-center p-2"
+                      onClick={openCartModal}
+                    >
                       <ShoppingBagIcon
                         className="h-6 w-6 flex-shrink-0 text-gray-400 group-hover:text-gray-500"
                         aria-hidden="true"
                       />
-                      <span className="ml-2 text-sm font-medium text-gray-700 group-hover:text-gray-800">0</span>
+                      <span className="ml-2 text-sm font-medium text-gray-700 group-hover:text-gray-800">
+                        {cart.length}
+                      </span>
                       <span className="sr-only">items in cart, view bag</span>
                     </a>
                   </div>
@@ -170,255 +477,14 @@ export default function Example() {
               </div>
             </div>
           </nav>
-       
+
           {<T />}
           <br />
         </header>
 
-        
         {/* {<H />} */}
-
         <Pr></Pr>
-    
-        
       </div>
     </>
-  )
+  );
 }
-
-
-// import React, { useState, useEffect ,Fragment} from 'react';
-// import Axios from 'axios';
-// import { Dialog, Transition } from '@headlessui/react';
-
-// import { Bars3Icon, MagnifyingGlassIcon, ShoppingBagIcon, XMarkIcon } from '@heroicons/react/24/outline'
-// import { Link } from 'react-router-dom';
-// import T from './Banner'
-// import H from './Categories'
-
-// // ... (previous imports)
-
-// // ... (previous imports)
-
-// const SearchModal = ({ isOpen, onClose, onSearch }) => {
-//   const [searchInput, setSearchInput] = useState('');
-//   const [products, setProducts] = useState([]);
-//   const closeButtonRef = useRef(null);
-//   const searchInputRef = useRef(null);
-
-//   useEffect(() => {
-//     Axios.get('http://localhost:9000/api/product/view')
-//       .then((response) => {
-//         setProducts(response.data);
-//       })
-//       .catch((error) => {
-//         console.error('Error fetching products:', error);
-//       });
-//   }, []);
-
-//   const filteredProducts =
-//     searchInput === ''
-//       ? products
-//       : products.filter((product) =>
-//           product.name.toLowerCase().includes(searchInput.toLowerCase())
-//         );
-
-//   useEffect(() => {
-//     if (isOpen) {
-//       // Set focus to the search input when the modal opens
-//       searchInputRef.current.focus();
-//     }
-//   }, [isOpen]);
-
-//   return (
-//     <Transition.Root show={isOpen} as={Fragment}>
-//       <Dialog as="div" className="fixed inset-0 z-50 overflow-y-auto" onClose={onClose}>
-//         <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-//           <Transition.Child
-//             as={Fragment}
-//             enter="ease-out duration-300"
-//             enterFrom="opacity-0"
-//             enterTo="opacity-100"
-//             leave="ease-in duration-200"
-//             leaveFrom="opacity-100"
-//             leaveTo="opacity-0"
-//           >
-//             <Dialog.Overlay className="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" />
-//           </Transition.Child>
-
-//           <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">
-//             &#8203;
-//           </span>
-//           <Transition.Child
-//             as={Fragment}
-//             enter="ease-out duration-300"
-//             enterFrom="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-//             enterTo="opacity-100 translate-y-0 sm:scale-100"
-//             leave="ease-in duration-200"
-//             leaveFrom="opacity-100 translate-y-0 sm:scale-100"
-//             leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-//           >
-//             <div className="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
-//               <div className="sm:flex sm:items-start">
-//                 <button
-//                   ref={closeButtonRef}
-//                   onClick={onClose}
-//                   type="button"
-//                   className="absolute top-0 right-0 pt-4 pr-4"
-//                 >
-//                   <XMarkIcon className="h-6 w-6 text-gray-500" aria-hidden="true" />
-//                 </button>
-//                 <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
-//                   <h3 className="text-lg leading-6 font-medium text-gray-900">Search Products</h3>
-//                   <div className="mt-2">
-//                     <div className="flex items-center">
-//                       <input
-//                         ref={searchInputRef}
-//                         type="text"
-//                         placeholder="Search products"
-//                         className="border-2 border-gray-300 p-2 flex-grow"
-//                         value={searchInput}
-//                         onChange={(e) => setSearchInput(e.target.value)}
-//                         autoFocus // Ensure autofocus
-//                       />
-//                       <button
-//                         onClick={() => onSearch(filteredProducts)}
-//                         className="ml-2 p-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
-//                       >
-//                         Search
-//                       </button>
-//                     </div>
-//                     {filteredProducts.length > 0 && (
-//                       <div className="mt-2">
-//                         <h3 className="text-lg font-medium text-gray-900 mb-2">Search Results</h3>
-//                         <ul>
-//                           {filteredProducts.map((product) => (
-//                             <li key={product.id} className="mb-2">
-//                               {product.name}
-//                             </li>
-//                           ))}
-//                         </ul>
-//                       </div>
-//                     )}
-//                   </div>
-//                 </div>
-//               </div>
-//             </div>
-//           </Transition.Child>
-//         </div>
-//       </Dialog>
-//     </Transition.Root>
-//   );
-// };
-
-// // ... (rest of the code)
-
-// // ... (rest of the code)
-
-
-// export default function Example() {
-//   const [open, setOpen] = useState(false);
-
-//   const handleSearch = (results) => {
-//     // Handle search results
-//     console.log('Search Results:', results);
-//   };
-
-//   const navigation = {
-//     categories: [
-//       // ... (unchanged)
-//     ],
-//     pages: [
-//       { name: 'Company', href: '#' },
-//       { name: 'Stores', href: '#' },
-//     ],
-//   }
-//   return (
-//     <>
-//       <div className="bg-white">
-//         Mobile menu
-     
-
-//         <header className="relative bg-white">
-//           <p className="flex h-10 items-center justify-center bg-indigo-600 px-4 text-sm font-medium text-white sm:px-6 lg:px-8">
-//             Get free delivery on orders over $100
-//           </p>
-
-//           <nav aria-label="Top" className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-//             <div className="border-b border-gray-200">
-//               <div className="flex h-16 items-center">
-//                 <button
-//                   type="button"
-//                   className="relative rounded-md bg-white p-2 text-gray-400 lg:hidden"
-//                   onClick={() => setOpen(true)}
-//                 >
-//                   <span className="absolute -inset-0.5" />
-//                   <span className="sr-only">Open menu</span>
-//                   <Bars3Icon className="h-6 w-6" aria-hidden="true" />
-//                 </button>
-
-//                 <div className="ml-4 flex lg:ml-0">
-//                   <a href="#">
-//                     <span className="sr-only">Your Company</span>
-//                     <img
-//                       className="h-8 w-auto"
-//                       src="https://tailwindui.com/img/logos/mark.svg?color=indigo&shade=600"
-//                       alt=""
-//                     />
-//                   </a>
-//                 </div>
-
-//                 <div className="ml-auto flex items-center">
-//                   <div className="hidden lg:flex lg:flex-1 lg:items-center lg:justify-end lg:space-x-6">
-//                     <a href="#" className="text-sm font-medium text-gray-700 hover:text-gray-800">
-//                       Sign in
-//                     </a>
-//                     <span className="h-6 w-px bg-gray-200" aria-hidden="true" />
-//                     <a href="#" className="text-sm font-medium text-gray-700 hover:text-gray-800">
-//                       Create account
-//                     </a>
-//                   </div>
-
-//                   <div className="hidden lg:ml-8 lg:flex">
-//                     <a href="#" className="flex items-center text-gray-700 hover:text-gray-800">
-//                       <img
-//                         src="https://tailwindui.com/img/flags/flag-canada.svg"
-//                         alt=""
-//                         className="block h-auto w-5 flex-shrink-0"
-//                       />
-//                       <span className="ml-3 block text-sm font-medium">CAD</span>
-//                       <span className="sr-only">, change currency</span>
-//                     </a>
-//                   </div>
-
-//                   <div className="flex lg:ml-6">
-//                     <button onClick={() => setOpen(true)}>
-//                       <MagnifyingGlassIcon className="h-6 w-6" aria-hidden="true" />
-//                     </button>
-//                   </div>
-
-//                   {/* Cart */}
-//                   <div className="ml-4 flow-root lg:ml-6">
-//                     <a href="#" className="group -m-2 flex items-center p-2">
-//                       <ShoppingBagIcon
-//                         className="h-6 w-6 flex-shrink-0 text-gray-400 group-hover:text-gray-500"
-//                         aria-hidden="true"
-//                       />
-//                       <span className="ml-2 text-sm font-medium text-gray-700 group-hover:text-gray-800">0</span>
-//                       <span className="sr-only">items in cart, view bag</span>
-//                     </a>
-//                   </div>
-//                 </div>
-//               </div>
-//             </div>
-//           </nav>
-
-//           <T />
-//           <br />
-//         </header>
-
-//         <H />
-//       </div>
-//     </>
-//   );
-// }
