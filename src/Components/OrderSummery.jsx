@@ -6,6 +6,7 @@ const OrderSummary = () => {
   const [product, setProduct] = useState(null);
   const [shippingAddress, setShippingAddress] = useState("");
   const [remarks, setRemarks] = useState("");
+  const [orderId, setOrderId] = useState(null);
 
   const { id } = useParams();
 
@@ -22,7 +23,7 @@ const OrderSummary = () => {
     try {
       const userId = JSON.parse(localStorage.getItem("Seller"))._id;
       const sellerId = JSON.parse(localStorage.getItem("Seller"))._id;
-
+  
       const orderData = {
         product_id: id,
         user_id: userId,
@@ -30,27 +31,27 @@ const OrderSummary = () => {
         shippingAddress: shippingAddress,
         remarks: remarks,
       };
+     
 
-      const response = await Axios.post(
-        `http://localhost:9000/api/orders/${sellerId}`,
-        orderData
-       
-      );
+      const response = await Axios.post(`http://localhost:9000/api/orders/${sellerId}`, orderData);
+  
       const orderId = response.data.data._id;
 
+       localStorage.setItem("order", orderId);
       console.log("Order ID:", orderId);
-
+      
+    
       await Axios.put(`http://localhost:9000/api/orders/${orderId}`, {
         status: 'processing',
       });
-        
 
+  
       console.log("Order request response:", response.data);
     } catch (error) {
       console.error("Error placing order:", error);
     }
   };
-
+  
 
 
   return (
