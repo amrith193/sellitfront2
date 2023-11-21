@@ -178,7 +178,7 @@ const Products = () => {
   const [products, setProducts] = useState([]);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
-
+  const [count, setCount] = useState(0); 
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -190,6 +190,7 @@ const Products = () => {
         console.error("Error fetching data:", error);
       }
     };
+    setCount(prevCount => prevCount + 1);
 
     fetchData();
   }, []);

@@ -50,6 +50,8 @@ export default function Example() {
     }
   }, []);
 
+  const [count, setCount] = useState(0);
+
   useEffect(() => {
     const authToken = localStorage.getItem("Token");
     setLoggedIn(!!authToken);
@@ -107,19 +109,18 @@ export default function Example() {
             })
           );
 
-          // Filter out items with invalid product IDs or no product details
           const validCartItems = cartWithDetails.filter(
             (item) => item !== null
           );
 
           setCart(validCartItems);
+          setCount((prevCount) => prevCount + 1); // Increment count to trigger a re-render
         })
         .catch((error) => {
           console.error("Error fetching cart data:", error);
         });
     }
   }, [loggedIn]);
-
   const closeMobileMenu = () => {
     setMobileMenuOpen(false);
   };
@@ -140,15 +141,15 @@ export default function Example() {
   };
   const deleteCartItem = async (cartItemId) => {
     try {
-      // Make a DELETE request to your server
+      
       const response = await Axios.delete(
         `http://localhost:9000/api/cart/removecart/${cartItemId}`
       );
 
       if (response.status === 200) {
-        // Successfully deleted
+        
         console.log(`Cart item with ID ${cartItemId} deleted successfully`);
-        // Update your UI or state as needed
+    
       } else {
         console.error(`Failed to delete cart item with ID ${cartItemId}`);
       }
@@ -267,7 +268,7 @@ export default function Example() {
                             {approvalStatus === "approved" ? (
                               // Render seller page content here
                               <span className="ml-4">
-                                <Link to="/admin" className=" ">
+                                <Link to="/seller" className=" ">
                                   Seller page
                                 </Link>
                               </span>

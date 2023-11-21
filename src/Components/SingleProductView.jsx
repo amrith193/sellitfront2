@@ -21,7 +21,7 @@
 */
 import { useState ,useEffect} from 'react'
 import Axios from 'axios';
-import { useParams } from 'react-router-dom';
+import { useParams ,Link} from 'react-router-dom';
 import { StarIcon } from '@heroicons/react/20/solid'
 import { RadioGroup } from '@headlessui/react'
 
@@ -89,6 +89,7 @@ export default function Example() {
 
   const { id } = useParams();
   const [products, setProduct] = useState(null);
+  const [product_id, setProduct_id] = useState(id);
 
   useEffect(() => {
     Axios.get(`http://localhost:9000/api/product/single/${id}`)
@@ -139,17 +140,7 @@ export default function Example() {
     <p>No images available</p>
   )}
             </div>
-            {/* <div className="aspect-h-2 aspect-w-3 overflow-hidden rounded-lg">
-            {products.productImage && products.productImage.length > 0 ? (
-    <img
-      src={`http://localhost:9000/uploads/product/${products.productImage[2]}`}
-      alt="Product"
-      className="w-full mb-2"
-    />
-  ) : (
-    <p>No images available</p>
-  )}
-            </div> */}
+    
           </div>
           <div className="aspect-h-5 aspect-w-4 lg:aspect-h-4 lg:aspect-w-3 sm:overflow-hidden sm:rounded-lg">
           {products.productImage && products.productImage.length > 0 ? (
@@ -208,13 +199,14 @@ export default function Example() {
 
                
               </div>
-
-              <button
-                type="submit"
-                className="mt-10 flex w-full items-center justify-center rounded-md border border-transparent bg-indigo-600 px-8 py-3 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-              >
-                Add to bag
-              </button>
+              <Link to={`/order/${product_id}`}>
+  <button
+    type="submit"
+    className="mt-10 flex w-full items-center justify-center rounded-md border border-transparent bg-indigo-600 px-8 py-3 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+  >
+    Order
+  </button>
+</Link>
             </form>
           </div>
 

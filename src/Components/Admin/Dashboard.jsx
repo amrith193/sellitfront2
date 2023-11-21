@@ -1,8 +1,12 @@
+// AdminDashboard.jsx
 import React, { useState, useEffect } from 'react';
 import Axios from 'axios';
 
+
 const AdminDashboard = () => {
   const [pendingSellers, setPendingSellers] = useState([]);
+  const [count, setCount] = useState(0); 
+
 
   useEffect(() => {
     const fetchPendingSellers = async () => {
@@ -13,9 +17,9 @@ const AdminDashboard = () => {
         console.error('Error fetching seller requests', error);
       }
     };
-
+   
     fetchPendingSellers();
-  }, []);
+  }, [count]);
 
   const handleApproveReject = async (userId, approvalStatus) => {
     try {
@@ -28,15 +32,27 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div>
-      <h1>Admin Dashboard</h1>
-      <h2>Pending Seller Requests</h2>
+    <div className="container mx-auto p-4">
+      <h1 className="text-3xl font-bold mb-4">Admin Dashboard</h1>
+      <h2 className="text-2xl font-semibold mb-2">Pending Seller Requests</h2>
       <ul>
         {pendingSellers.map((seller) => (
-          <li key={seller._id}>
-            {seller.username} - {seller.email}
-            <button onClick={() => handleApproveReject(seller._id, 'approved')}>Approve</button>
-            <button onClick={() => handleApproveReject(seller._id, 'rejected')}>Reject</button>
+          <li key={seller._id} className="mb-4 border-b border-gray-300 pb-2">
+            <span className="text-lg font-semibold">Name:{seller.name}</span><br />
+            <span className="text-lg font-semibold">Phone:{seller.phone}</span><br />
+            <span className="text-lg font-semibold">Email:{seller.email}</span><br />
+            <button
+              onClick={() => handleApproveReject(seller._id, 'approved')}
+              className="bg-green-500 text-white px-4 py-2 rounded mr-2"
+            >
+              Approve
+            </button>
+            <button
+              onClick={() => handleApproveReject(seller._id, 'rejected')}
+              className="bg-red-500 text-white px-4 py-2 rounded"
+            >
+              Reject
+            </button>
           </li>
         ))}
       </ul>

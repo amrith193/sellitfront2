@@ -4,6 +4,7 @@ import axios from 'axios';
 
 const Table = () => {
   const [data, setData] = useState([]);
+  const [count, setCount] = useState(0); 
 
   useEffect(() => {
     const fetchData = async () => {
@@ -14,9 +15,11 @@ const Table = () => {
         console.error('Error fetching data:', error);
       }
     };
-
+    setCount(prevCount => prevCount + 1);
     fetchData();
   }, []); // Empty dependency array to run the effect only once when the component mounts
+
+  
 
   const handleDelete = async (itemId) => {
     try {

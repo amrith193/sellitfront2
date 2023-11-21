@@ -11,6 +11,9 @@ import SingleProductView from "./SingleProductView";
 import SignIn from "./SignIn";
 import Register from "./Register";
 import AdminLogin from "./AdminLogin";
+import OrderSummary from "./OrderSummery";
+import SellerPage from "./SellerPage";
+
 // import Dashboard from './Admin/Dashboard';
 // import Users from './Admin/User';
 // import Products from './Admin/Product';
@@ -39,8 +42,11 @@ export default function AppRouter() {
           {/* <Route path='/admin/dasboard' element={<Dashboard/>} />
           <Route path='/admin/user' element={<Users/>} />
           <Route path='/admin/product' element={<Products/>} /> */}
-          <Route path='/seller' element={<SellerForm />} />
+          <Route path='/add' element={<SellerForm />} />
+          <Route path='/seller' element={<SellerPage/>} />
           <Route path='/adminlogin' element={<AdminLogin />} />
+          <Route path='/order/:id' element={<OrderSummary />} />
+       
          
         <Route path="/product/:id" element={<SingleProductView/>} />
         <Route path="/login" element={<SignIn/>} />
