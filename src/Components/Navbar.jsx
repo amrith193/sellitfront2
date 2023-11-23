@@ -40,6 +40,7 @@ export default function Example() {
   const cancelButtonRef = useRef(null);
   const [user, setUser] = useState("");
   const nav = useNavigate();
+  const navigate = useNavigate();
 
   // After successful login
   useEffect(() => {
@@ -76,6 +77,7 @@ export default function Example() {
       // Fetch the seller's ID from local storage
       const sellerId = JSON.parse(localStorage.getItem("Seller"))._id;
 
+
       // Fetch cart data using Axios
       Axios.get(`http://localhost:9000/api/cart/viewSingle/${sellerId}`, {
         headers: {
@@ -108,6 +110,8 @@ export default function Example() {
               }
             })
           );
+          
+   
 
           const validCartItems = cartWithDetails.filter(
             (item) => item !== null
@@ -176,13 +180,22 @@ export default function Example() {
     fetchPendingSellers();
   }, []);
 
-  const userId = JSON.parse(localStorage.getItem("Seller"))._id;
+
+  const sellerData = JSON.parse(localStorage.getItem("Seller"));
+  if (!sellerData || !sellerData._id) {
+    console.error("Invalid or missing seller data in localStorage");
+    // Handle the error or set a default sellerId
+    return;
+  }
+  
+  const sellerId = sellerData._id;
+  
 
   useEffect(() => {
     const fetchApprovalStatus = async () => {
       try {
         const response = await Axios.get(
-          `http://localhost:9000/api/register/view-status/${userId}`
+          `http://localhost:9000/api/register/view-status/${sellerId}`
         );
         setApprovalStatus(response.data.approvalStatus);
       } catch (error) {
@@ -192,7 +205,9 @@ export default function Example() {
     };
 
     fetchApprovalStatus();
-  }, [userId]);
+  }, [sellerId]);
+
+
 
   return (
     <>
