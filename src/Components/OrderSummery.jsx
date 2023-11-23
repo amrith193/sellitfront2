@@ -140,7 +140,7 @@ const [info,setinfo]=useState("")
     }
   };
 
-  const isOrderPlaced = orderStatusMessage === "Waiting for order acceptance";
+  
   
 
   return (
@@ -207,7 +207,7 @@ const [info,setinfo]=useState("")
 )}
 
 {/* Remarks */}
-{orderStatusMessage && (
+{!orderStatusMessage && (
   <div className="mb-4">
     <label
       htmlFor="remarks"
