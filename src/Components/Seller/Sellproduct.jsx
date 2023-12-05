@@ -196,72 +196,77 @@ const SellerPage = () => {
   };
 
   return (
-    <div className="container mx-auto p-8">
-      <h1 className="text-3xl font-semibold mb-9 text-center text-blue-600 transition-all duration-300">
-        Seller Dashboard
-      </h1>
-      <div >
-          {/* <h2 className="text-xl font-semibold mb-4 text-blue-800">
-            Add Product
-          </h2> */}
-          <h2 className="text-xl font-semibold mb-4 text-blue-800">
-            <Link to='/'>back</Link>
-          </h2>
-          <Link
-            to="/add"
-            className="block bg-blue-500 text-white px-4 py-2 rounded-md text-center transition duration-300 hover:bg-blue-600"
-          >
-            Add a new product
-          </Link>
-     
-        </div>
-        <br />
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-       
+<div className="container mx-auto p-8">
+  <h1 className="text-3xl font-semibold mb-9 text-center text-blue-600">
+    Seller Dashboard
+  </h1>
+  <div className="flex justify-between items-center mb-4">
+    <Link to="/" className="text-xl font-semibold text-blue-800 hover:underline">
+      Back
+    </Link>
+    <Link
+      to="/add"
+      className="bg-blue-500 text-white px-4 py-2 rounded-md text-center hover:bg-blue-600"
+    >
+      Add a new product
+    </Link>
+  </div>
+  <div className="bg-green-200 p-8 rounded-md shadow-md">
+    <h2 className="text-xl font-semibold mb-4">View Products</h2>
+    <div className="overflow-x-auto">
+      <table className="min-w-full bg-white border border-gray-300">
+        <thead>
+          <tr>
+            <th className="py-2 px-4 border-b">Product Image</th>
+            <th className="py-2 px-4 border-b">Product Name</th>
+            <th className="py-2 px-4 border-b">Price</th>
+            <th className="py-2 px-4 border-b">condition</th>
+            <th className="py-2 px-4 border-b">status</th>
+            <th className="py-2 px-4 border-b">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {products.map((product) => (
+            <tr key={product._id} className={product.status === 'Out of Stock' ? 'bg-red-100' : 'bg-green-100'}>
+              <td className="py-2 px-4 border-b">
+                <img
+                  src={`http://localhost:9000/uploads/product/${product.productImage[0]}`}
+                  alt="Product"
+                  className="w-20 h-20 rounded-md"
+                />
+              </td>
+              <td className="py-2 px-4 border-b">{product.name}</td>
+              <td className="py-2 px-4 border-b">${product.price}</td>
+              <td className="py-2 px-4 border-b">{product.condition}</td>
+              <td className="py-2 px-4 border-b">{product.status}</td>
+              <td className="py-2 px-4 border-b">
+                <button
+                  className="bg-blue-500 text-white py-1 px-2 rounded-md ml-2"
+                  onClick={() => singleview(product._id)}
+                >
+                  View
+                </button>
+                <button
+                  className="bg-blue-500 text-white py-1 px-2 rounded-md ml-2"
+                  onClick={() => openEditModal(product)}
+                >
+                  Edit
+                </button>
+                <button
+                  className="bg-red-500 text-white py-1 px-2 rounded-md ml-2"
+                  onClick={() => handleDelete(product._id)}
+                >
+                  Delete
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+ 
 
 
-        {/* View Products Section */}
-        <div className="bg-green-200 p-6 rounded-md shadow-md transition-all duration-300 hover:bg-green-300 transform hover:scale-105">
-          <h2 className="text-xl font-semibold mb-4">View Products</h2>
-          <ul className="list-disc pl-4">
-            {products.map((product) => (
-              <li key={product._id} className="mb-4 flex flex-col">
-                <div className="flex justify-left items-center mb-4">
-                  <img
-                    src={`http://localhost:9000/uploads/product/${product.productImage[0]}`}
-                    alt="Product"
-                    className="w-20 h-20 rounded-md"
-                  />
-                </div>
-
-                <div className="flex justify-between items-center">
-                  <div className="text-lg font-medium">{product.name}</div>
-                  <div className="flex items-center">
-                    <span className="text-gray-700">${product.price}</span>
-                    <button
-                      className="bg-blue-500 text-white py-1 px-2 rounded-md ml-4"
-                      onClick={() => openEditModal(product)}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      className="bg-red-500 text-white py-1 px-2 rounded-md ml-2"
-                      onClick={() => handleDelete(product._id)}
-                    >
-                      Delete
-                    </button>
-                    <button
-                      className="bg-blue-500 text-white py-1 px-2 rounded-md ml-2"
-                      onClick={() => singleview(product._id)}
-                    >
-                      View
-                    </button>
-                  </div>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
 
         {/* Edit Modal */}
         {isEditModalOpen && (
@@ -323,83 +328,10 @@ const SellerPage = () => {
             </div>
           </div>
         )}
-
-        {/* Order Requests Section */}
-        <div className="bg-purple-200 p-6 rounded-md shadow-md transition-all duration-300 hover:bg-purple-300 transform hover:scale-105">
-          <h2 className="text-xl font-semibold mb-4">Order Requests</h2>
-          <ul className="list-disc pl-4">
-            {orderRequests
-              ?.filter(
-                (item) =>
-                  item?.product_id?.seller_id === sellerId?._id &&
-                  item.status !== "completed" &&
-                  item.status !== "cancelled"
-              )
-              .map((order) => (
-                <li
-                  key={order._id}
-                  className="mb-4 p-4 bg-gray-100 rounded-md flex flex-col"
-                >
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-lg font-semibold">
-                      Order Request {order._id} - Status: {order.status}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center flex-grow">
-                    <div className="space-x-4">
-                      <button
-                        onClick={() => handleApprove(order._id)}
-                        className="bg-green-500 text-white px-3 py-1 rounded-md hover:bg-green-600"
-                      >
-                        Approve
-                      </button>
-
-                      <button
-                        onClick={() => handleReject(order._id)}
-                        className="bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600"
-                      >
-                        Reject
-                      </button>
-                    </div>
-                  </div>
-                </li>
-              ))}
-          </ul>
-        </div>
-
-    {/* Completed Orders */}
-<div className="bg-gradient-to-br from-green-400 to-blue-500 p-6 rounded-md shadow-md ">
-  <h2 className="text-2xl font-semibold mb-4 text-white">Completed Orders</h2>
-  <ul className="list-disc pl-4">
-    <li className="mb-4 p-4 bg-gray-100 rounded-md flex flex-col">
-      <div className="flex justify-between items-center mb-2">
-        <span className="text-lg font-semibold text-gray-800">Order #12345</span>
-      </div>
-      <div>
-        <h2 className="text-lg font-semibold text-gray-800">User Details</h2>
-        <p className="text-gray-700">Name: {detail.userName}</p>
-        <p className="text-gray-700">Phone: {detail.userPhone}</p>
-
-        <h2 className="text-lg font-semibold text-gray-800">Order Details</h2>
-        <p className="text-gray-700">Shipping Address: {detail.shippingAddress}</p>
-        <p className="text-gray-700">Remarks: {detail.remarks}</p>
-      </div>
-      <div className="flex justify-between items-center flex-grow">
-        <div className="space-x-4">
-          {/* Add buttons or additional details here */}
-        </div>
-      </div>
-    </li>
-  </ul>
-</div>
-
-
-
       </div>
     </div>
   );
 };
-
 const EditModal = ({ product, onClose }) => {
   const [editedProduct, setEditedProduct] = useState({
     name: product.name,
@@ -603,5 +535,4 @@ const EditModal = ({ product, onClose }) => {
     </div>
   );
 };
-
 export default SellerPage;

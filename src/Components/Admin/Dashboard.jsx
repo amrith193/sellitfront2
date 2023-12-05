@@ -1,6 +1,7 @@
 // AdminDashboard.jsx
 import React, { useState, useEffect } from 'react';
 import Axios from 'axios';
+import { Link,useNavigate } from "react-router-dom";
 
 
 const AdminDashboard = () => {
@@ -19,7 +20,7 @@ const AdminDashboard = () => {
     };
    
     fetchPendingSellers();
-  }, [count]);
+  }, [count,pendingSellers]);
 
   const handleApproveReject = async (userId, approvalStatus) => {
     try {
@@ -33,9 +34,14 @@ const AdminDashboard = () => {
 
   return (
     <div className="container mx-auto p-4">
+          <h2 className="text-xl font-semibold mb-4 text-blue-800">
+            <Link to='/'>Log out</Link>
+          </h2>
       <h1 className="text-3xl font-bold mb-4">Admin Dashboard</h1>
+     
       <h2 className="text-2xl font-semibold mb-2">Pending Seller Requests</h2>
       <ul>
+ 
         {pendingSellers.map((seller) => (
           <li key={seller._id} className="mb-4 border-b border-gray-300 pb-2">
             <span className="text-lg font-semibold">Name:{seller.name}</span><br />

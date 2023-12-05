@@ -13,7 +13,9 @@ import H from "./Categories";
 import Axios from "axios";
 import { data } from "autoprefixer";
 import { Link, useNavigate } from "react-router-dom";
-
+import footer from "./Footer";
+import Footer from "./Footer";
+import user from "./UserDropdown";
 const navigation = {
   categories: [],
   pages: [
@@ -36,13 +38,13 @@ export default function Example() {
   const [cart, setCart] = useState([]);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [cartModalOpen, setCartModalOpen] = useState(false);
-
+  const [info, setInfo] = useState({});
   const cancelButtonRef = useRef(null);
   const [user, setUser] = useState("");
   const nav = useNavigate();
   const navigate = useNavigate();
 
-  // After successful login
+ 
   useEffect(() => {
     if (localStorage.getItem("Token") === null) {
       navigate("/login");
@@ -51,85 +53,151 @@ export default function Example() {
     }
   }, []);
 
-  const [count, setCount] = useState(0);
+  // useEffect(() => {
+  //   const authToken = localStorage.getItem("Token");
+  //   setLoggedIn(!!authToken);
+
+  //   const fetchProductDetails = async (productId) => {
+  //     try {
+  //       const response = await Axios.get(
+  //         `http://localhost:9000/api/product/single/${productId}`
+  //       );
+  //       return response.data;
+  //     } catch (error) {
+  //       console.error("Error fetching product ", error);
+  //       return null;
+  //     }
+  //   };
+
+  //   const fetchCartData = async () => {
+  //     try {
+  //       if (!loggedIn) return;
+
+  //       const sellerId = JSON.parse(localStorage.getItem("Seller"))._id;
+  //       const response = await Axios.get(
+  //         `http://localhost:9000/api/cart/viewSingle/${sellerId}`,
+  //         {
+  //           headers: {
+  //             Token: authToken,
+  //           },
+  //         }
+  //       );
+
+  //       const validCartItems = [];
+
+  //       for (const cartItem of response.data) {
+  //         const productDetails = await fetchProductDetails(cartItem.product_id);
+  //         if (productDetails) {
+  //           validCartItems.push({ ...cartItem, productDetails });
+  //         } else {
+  //           console.error("Product details are not available");
+  //         }
+  //       }
+
+  //       setCart(validCartItems);
+  //     } catch (error) {
+  //       console.error("Error fetching cart data:", error);
+  //     }
+  //   };
+
+  //   fetchCartData();
+  // }, [loggedIn]);
 
   useEffect(() => {
     const authToken = localStorage.getItem("Token");
     setLoggedIn(!!authToken);
 
-    if (loggedIn) {
-      // Fetch details for each product in the cart
-      const fetchProductDetails = async (productId) => {
-        try {
-          const response = await Axios.get(
-            `http://localhost:9000/api/product/single/${productId}`
-          );
-          return response.data; // Assuming your API response contains the product details
-        } catch (error) {
-          console.error(
-            `Error fetching product data for product ID ${productId}:`,
-            error
-          );
-          return null;
+    const fetchProductDetails = async (productId) => {
+      try {
+        const response = await Axios.get(
+          `http://localhost:9000/api/product/single/${productId}`
+        );
+
+        console.log(response.data);
+        return response.data;
+      } catch (error) {
+        console.error("Error fetching product ", error);
+        return null;
+      }
+    };
+
+    const fetchCartData = async () => {
+      try {
+        if (!loggedIn) return;
+
+        const sellerId = JSON.parse(localStorage.getItem("Seller"))._id;
+        const response = await Axios.get(
+          `http://localhost:9000/api/cart/viewSingle/${sellerId}`,
+          {
+            headers: {
+              Token: authToken,
+            },
+          }
+        );
+
+        const validCartItems = [];
+
+        for (const cartItem of response.data) {
+          const productDetails = await fetchProductDetails(cartItem.product_id);
+          if (productDetails) {
+            validCartItems.push({ ...cartItem, productDetails });
+          } else {
+            console.error("Product details are not available");
+          }
         }
-      };
 
-      // Fetch the seller's ID from local storage
-      const sellerId = JSON.parse(localStorage.getItem("Seller"))._id;
+        setCart(validCartItems);
+      } catch (error) {
+        console.error("Error fetching cart data:", error);
+      }
+    };
 
-
-      // Fetch cart data using Axios
-      Axios.get(`http://localhost:9000/api/cart/viewSingle/${sellerId}`, {
-        headers: {
-          Token: authToken,
-        },
-      })
-        .then(async (response) => {
-          // Fetch details for each product in the cart
-          const cartWithDetails = await Promise.all(
-            response.data.map(async (cartItem) => {
-              if (
-                cartItem.product_id &&
-                typeof cartItem.product_id === "string"
-              ) {
-                // Check if product_id is defined and is a string
-                const productDetails = await fetchProductDetails(
-                  cartItem.product_id
-                );
-                if (productDetails) {
-                  return { ...cartItem, productDetails };
-                } else {
-                  console.error(
-                    `Product details are not available for product ID ${cartItem.product_id}`
-                  );
-                  return null;
-                }
-              } else {
-                console.error("Invalid product ID for cart item:", cartItem);
-                return null;
-              }
-            })
-          );
-          
-   
-
-          const validCartItems = cartWithDetails.filter(
-            (item) => item !== null
-          );
-
-          setCart(validCartItems);
-          setCount((prevCount) => prevCount + 1); // Increment count to trigger a re-render
-        })
-        .catch((error) => {
-          console.error("Error fetching cart data:", error);
-        });
-    }
+    fetchCartData();
   }, [loggedIn]);
+
+  useEffect(() => {
+    const authToken = localStorage.getItem("Token");
+    setLoggedIn(!!authToken);
+
+    const fetchCartData = async () => {
+      try {
+        if (!loggedIn) return;
+
+        const sellerId = JSON.parse(localStorage.getItem("Seller"))._id;
+        const response = await Axios.get(
+          `http://localhost:9000/api/cart/viewSingle/${sellerId}`,
+          {
+            headers: {
+              Token: authToken,
+            },
+          }
+        );
+
+        const validCartItems = [];
+
+        for (const cartItem of response.data) {
+          const productDetails = await fetchProductDetails(cartItem.product_id);
+          if (productDetails) {
+            validCartItems.push({ ...cartItem, productDetails });
+          } else {
+            console.error("Product details are not available");
+          }
+        }
+
+        setCart(validCartItems);
+      } catch (error) {
+        console.error("Error fetching cart data:", error);
+      }
+    };
+
+    fetchCartData();
+  }, [loggedIn]);
+
   const closeMobileMenu = () => {
     setMobileMenuOpen(false);
   };
 
-  const openCartModal = () => {
+  const openCartModal = () => { 
     setCartModalOpen(true);
   };
 
@@ -140,26 +208,41 @@ export default function Example() {
   const handleLogout = () => {
     localStorage.removeItem("Token");
     localStorage.removeItem("Seller");
+    localStorage.removeItem("OrderRequests");
     setLoggedIn(false);
     nav("/login");
   };
-  const deleteCartItem = async (cartItemId) => {
+
+  const deleteCartItem = async (cartId) => {
     try {
-      
+      const authToken = localStorage.getItem("Token");
+
+      if (!cartId) {
+        console.error("Invalid cart ID:", cartId);
+        return;
+      }
+
       const response = await Axios.delete(
-        `http://localhost:9000/api/cart/removecart/${cartItemId}`
+        `http://localhost:9000/api/cart/removecart/${cartId}`,
+        {
+          headers: {
+            Token: authToken,
+          },
+        }
       );
 
+      console.log("Response:", response);
+
       if (response.status === 200) {
-        
-        console.log(`Cart item with ID ${cartItemId} deleted successfully`);
-    
+        console.log(`Cart item with ID ${cartId} deleted successfully`);
+        setLoggedIn(!loggedIn);
       } else {
-        console.error(`Failed to delete cart item with ID ${cartItemId}`);
+        console.error(`Failed to delete cart item with ID ${cartId}`);
       }
     } catch (error) {
-      console.error(`Error deleting cart item with ID ${cartItemId}:`, error);
+      console.error(`Error deleting cart item with ID ${cartId}:`, error);
     }
+    loggedIn();
   };
 
   const [pendingSellers, setPendingSellers] = useState([]);
@@ -180,16 +263,14 @@ export default function Example() {
     fetchPendingSellers();
   }, []);
 
-
   const sellerData = JSON.parse(localStorage.getItem("Seller"));
   if (!sellerData || !sellerData._id) {
     console.error("Invalid or missing seller data in localStorage");
     // Handle the error or set a default sellerId
     return;
   }
-  
+
   const sellerId = sellerData._id;
-  
 
   useEffect(() => {
     const fetchApprovalStatus = async () => {
@@ -197,6 +278,7 @@ export default function Example() {
         const response = await Axios.get(
           `http://localhost:9000/api/register/view-status/${sellerId}`
         );
+
         setApprovalStatus(response.data.approvalStatus);
       } catch (error) {
         console.error("Error fetching user status", error);
@@ -207,7 +289,22 @@ export default function Example() {
     fetchApprovalStatus();
   }, [sellerId]);
 
+  useEffect(() => {
+    const userdetail = async () => {
+      try {
+        const responsedetail = await Axios.get(
+          `http://localhost:9000/api/register/singleview/${sellerId}`
+        );
+        const userName = responsedetail.data.name;
+        const useremail = responsedetail.data.email;
+        const image = responsedetail.data.image;
 
+        setInfo({ userName, useremail, image });
+        console.log("D", responsedetail);
+      } catch (error) {}
+    };
+    userdetail();
+  }, [sellerId]);
 
   return (
     <>
@@ -239,8 +336,8 @@ export default function Example() {
               >
                 <Dialog.Panel className="relative flex w-full max-w-xs flex-col overflow-y-auto bg-white pb-12 shadow-xl">
                   {/* Links */}
-                  <div className="space-y-6 border-t border-gray-200 px-4 py-6">
-                    {navigation.pages.map((page) => (
+                  <div className="space-y-6 border border-gray-200 px-4 py-6">
+                    {/* {navigation.pages.map((page) => (
                       <div key={page.name} className="flow-root">
                         <a
                           href={page.href}
@@ -249,7 +346,7 @@ export default function Example() {
                           {page.name}
                         </a>
                       </div>
-                    ))}
+                    ))} */}
                   </div>
 
                   <div>
@@ -262,7 +359,76 @@ export default function Example() {
                     </button>
 
                     {loggedIn ? (
-                      <div style={{ display: "flex", alignItems: "center" }}>
+                      // <div style={{ display: "flex", alignItems: "center" }}>
+                      //   <button
+                      //     onClick={() => setOpen(!open)}
+                      //     className="flex text-sm font-medium text-gray-700 hover:text-gray-800 focus:outline-none"
+                      //   >
+                      //     <div className="h-6 w-6" aria-hidden="true" />
+                      //     <br />
+                      //   </button>
+                      //   <div style={{ marginTop: "-26px" }}>
+                      //     <div className="py-1">
+                      //       <span className="ml-4">
+                      //         <div className="flex items-center justify-center min-screen">
+                      //           <div className="bg-white p-8 rounded-lg shadow-md">
+                      //             <img
+                      //               src={`http://localhost:9000/Images/users/${info.image}`}
+                      //               className="w-24 h-24 rounded-full mx-auto mb-4"
+                      //             />
+                      //             <h2 className="text-2xl font-bold text-gray-800 mb-2">
+                      //               {info.userName}
+                      //             </h2>
+                      //             <h2 className="text-2 font text-gray-800 mb-4">
+                      //               {info.useremail}
+                      //             </h2>
+
+                      //             <div>
+                      //               <Link
+                      //                 to="/manage-account"
+                      //                 className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-1 rounded mr-4"
+                      //               >
+                      //                 Order Summary
+                      //               </Link>
+                      //             </div>
+                      //             <br />
+
+                      //             <div className="py-2 ">
+                      //               {approvalStatus === "approved" ? (
+                      //                 <span className="py-2">
+                      //                   <Link
+                      //                     to="/sell"
+                      //                     className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-2 rounded mb-2 mt-2"
+                      //                   >
+                      //                     Seller page
+                      //                   </Link>
+                      //                 </span>
+                      //               ) : approvalStatus === "pending" ? (
+                      //                 <span className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-1 rounded mr-4">
+                      //                   Waiting for Approval
+                      //                 </span>
+                      //               ) : (
+                      //                 <span className="bg-red-500 hover:bg-orange-700 text-white font-bold py-2 px-1 rounded mr-4">
+                      //                   rejected
+                      //                 </span>
+                      //               )}
+                      //             </div>
+
+                      //             <button
+                      //               onClick={handleLogout}
+                      //               className="bg-red-500 hover:bg-orange-700 text-white font-bold py-2 px-1 rounded mr-4 mt-4"
+                      //             >
+                      //               Logout
+                      //               <div className="h-4 w-4 inline-block ml-1" />
+                      //             </button>
+                      //           </div>
+                      //         </div>
+                      //       </span>
+                      //     </div>
+                      //   </div>
+                      // </div>
+
+                      <div className="flex items-center">
                         <button
                           onClick={() => setOpen(!open)}
                           className="flex text-sm font-medium text-gray-700 hover:text-gray-800 focus:outline-none"
@@ -270,59 +436,78 @@ export default function Example() {
                           <div className="h-6 w-6" aria-hidden="true" />
                           <br />
                         </button>
-                        <div style={{ marginTop: "-26px" }}>
-                          <div className="py-1">
-                            <span className="ml-4">
-                              <Link to="/manage-account" className=" ">
-                                Manage Account
-                              </Link>
-                            </span>
-                          </div>
+                        <div className="ml-4">
+                          <div className="flex items-center justify-center min-screen">
+                            <div className="bg-white p-4">
+                              <img
+                                src={`http://localhost:9000/Images/users/${info.image}`}
+                                className="w-20 h-20 rounded-full mx-auto mb-2"
+                                alt={`Profile picture of ${info.userName}`}
+                              />
+                              <h2 className="text-xl font-bold text-gray-800 mb-1">
+                                {info.userName}
+                              </h2>
+                              <h2 className="text-sm text-gray-800 mb-4">
+                                {info.useremail}
+                              </h2>
 
-                          <div className="py-2 ">
-                            {approvalStatus === "approved" ? (
-                              // Render seller page content here
-                              <span className="ml-4">
-                                <Link to="/seller" className=" ">
-                                  Seller page
+                              <div className="mb-5">
+                                <Link
+                                  to="/sum"
+                                  className="bg-indigo-500 hover:bg-indigo-700 text-white font-bold py-2 px-2 rounded "
+                                >
+                                  Order Summary
                                 </Link>
-                              </span>
-                            ) : approvalStatus === "pending" ? (
-                              // Render waiting for approval message
+                              </div>
+                              <div className="mb-4">
+                                <Link
+                                  to="/account"
+                                  className="bg-indigo-500 hover:bg-indigo-700 text-white font-bold py-2 px-2 rounded "
+                                >
+                                  Manage Account
+                                </Link>
+                              </div>
+                              <div className="py-1">
+                                {approvalStatus === "approved" ? (
+                                  <Link
+                                    to="/sell"
+                                    className="bg-indigo-500 hover:bg-blue-700 text-white font-bold py-2 px-2 rounded mb-1 mt-1"
+                                  >
+                                    Seller page
+                                  </Link>
+                                ) : approvalStatus === "pending" ? (
+                                  <span className="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-1 px-2 rounded">
+                                    Waiting for Approval
+                                  </span>
+                                ) : (
+                                  <span className="bg-red-500 hover:bg-orange-700 text-white font-bold py-1 px-2 rounded">
+                                    Rejected
+                                  </span>
+                                )}
+                              </div>
 
-                              <span className="ml-4">Waiting for Approval</span>
-                            ) : (
-                              // Handle other status values as needed
-                              <span className="ml-4">rejected</span>
-                            )}
-                          </div>
-
-                          <div className="py-2">
-                            <span
-                              style={{
-                                marginRight: "20px",
-                                padding: "15px",
-                                paddingTop: "0px",
-                              }}
-                            >
-                              <button onClick={handleLogout} className=" ">
+                              <button
+                                onClick={handleLogout}
+                                className="bg-red-500 hover:bg-orange-700 text-white font-bold py-1 px-2 rounded mt-2"
+                              >
                                 Logout
-                                <div className="h-4 w-4 inline-block ml-1" />
+                                <div className="h-3 w-3 inline-block ml-1" />
                               </button>
-                            </span>
+                            </div>
                           </div>
                         </div>
                       </div>
                     ) : (
-                      <button onClick={() => nav("/login")} className=" ">
+                      <button onClick={() => nav("/login")} className="">
                         Login
                       </button>
                     )}
-                    <div className="py-2 pl-5">
-                      <span className="ml-4">
-                        <Link to="/adminlogin" className=" ">
+
+                    <div className=" pl-5">
+                      <span className="ml-4 mt-3">
+                        {/* <Link to="/adminlogin" className=" ">
                           Admin Login
-                        </Link>
+                        </Link> */}
                       </span>
                     </div>
                   </div>
@@ -334,7 +519,7 @@ export default function Example() {
 
         <header className="relative bg-white">
           <p className="flex h-10 items-center justify-center bg-indigo-600 px-4 text-sm font-medium text-white sm:px-6 lg:px-8">
-            Get free delivery on orders over $100
+            Get free delivery on orders over Rs 100
           </p>
 
           <nav
@@ -350,20 +535,23 @@ export default function Example() {
                 >
                   <span className="absolute -inset-0.5" />
                   <span className="sr-only">Open menu</span>
-                  <UserCircleIcon className="h-6 w-6" aria-hidden="true" />
+                  <img
+                    className="h-8  w-8 object-cover rounded-full ml-4"
+                    src={`http://localhost:9000/Images/users/${info.image}`}
+                    alt=""
+                  />
+
+                  {/* <UserCircleIcon className="h-6 w-6" aria-hidden="true" /> */}
                 </button>
 
                 {/* Logo */}
-                <div className="ml-4 flex lg:ml-0">
-                  <a href="#">
-                    <span className="sr-only">Your Company</span>
-                    <img
-                      className="h-8 w-auto"
-                      src="https://tailwindui.com/img/logos/mark.svg?color=indigo&shade=600"
-                      alt=""
-                    />
-                  </a>
-                </div>
+                <div className="ml-4 flex lg:ml-2">
+  <a href="#" className="text-blue-700 font-bold ">
+    <span className="sr-only">Your Company</span>
+    Sell-It
+  </a>
+</div>
+
 
                 <div className="ml-auto flex items-center">
                   <div className="hidden lg:ml-8 lg:flex">
@@ -371,13 +559,13 @@ export default function Example() {
                       href="#"
                       className="flex items-center text-gray-700 hover:text-gray-800"
                     >
-                      <img
-                        src="https://tailwindui.com/img/flags/flag-canada.svg"
+                      {/* <img
+                        src="https://tailwindui.com/img/flags/flag-india.svg"
                         alt=""
                         className="block h-auto w-5 fl  ex-shrink-0"
-                      />
+                      /> */}
                       <span className="ml-3 block text-sm font-medium">
-                        CAD
+                        IND
                       </span>
                       <span className="sr-only">, change currency</span>
                     </a>
@@ -434,7 +622,7 @@ export default function Example() {
                             {/* Modal Content */}
                             <div>
                               <h3 className="text-lg leading-6 font-medium text-gray-900">
-                                Shopping Cart
+                                Favorites
                               </h3>
                               <div className="mt-2">
                                 {/* Display cart items here */}
@@ -454,11 +642,11 @@ export default function Example() {
                                       </div>
                                       <button
                                         className="text-red-500 hover:text-red-700"
-                                        onClick={() =>
-                                          deleteCartItem(
-                                            item.productDetails._id
-                                          )
-                                        }
+                                        onClick={() => {
+                                          console.log("item", item);
+
+                                          deleteCartItem(item._id);
+                                        }}
                                       >
                                         Remove
                                       </button>
@@ -499,8 +687,9 @@ export default function Example() {
         </header>
 
         {/* {<H />} */}
-        <Pr></Pr>
+        <Pr setLoggedIn={setLoggedIn} loggedIn={loggedIn}></Pr>
       </div>
     </>
   );
 }
+

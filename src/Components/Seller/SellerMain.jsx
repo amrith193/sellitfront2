@@ -1,18 +1,17 @@
-import React, { useState, Fragment } from "react";
-import Dashboard from "./Dashboard";
-import Users from "./User";
-import Products from "./Product";
-import edit from "./Add";
-import cat from "./CategoryForm";
+import React, { useState, Fragment,useEffect } from "react";
+
+import Products from "./Sellproduct";
+// import edit from "./Add";
+import Orders from "./Sellorder";
+import sell from "./SellComplete";
+
+import Axios from 'axios';
 
 
 
-import Orders from "./Order";
 
 const components = {
-  dashboard: Dashboard,
-  users: Users,
-  category:cat,
+
   products: Products,
   orders: Orders,
   
@@ -21,33 +20,57 @@ const components = {
 
 const drawerWidth = 0; // Set the width of the drawer
 
-export default function App() {
-  const [currentComponent, setCurrentComponent] = useState("dashboard");
+export default function Appseller() {
+  const [currentComponent, setCurrentComponent] = useState("products");
   const [drawerOpen, setDrawerOpen] = useState(true);
+  const [info, setInfo] = useState({});
+  const sellerId = JSON.parse(localStorage.getItem("Seller"))._id;
+  console.log("D", info);
+  console.log("D", sellerId);
 
-  const changeComponent = (component) => {
-    setCurrentComponent(component);
+
+  const userdetail = async () => {
+    try {
+      const responseDetail = await Axios.get(`http://localhost:9000/api/register/singleview/${sellerId}`);
+      console.log("det", responseDetail.data);
+  
+      
+      setInfo(responseDetail.data);
+    } catch (error) {
+      console.error("Error fetching user details:", error.message);
+    }
   };
-
+ 
+  useEffect(() => {
+    userdetail();
+  }, []);
+  
+  
+  const changeComponent = (component) => {
+    try {
+      setCurrentComponent(component);
+    } catch (error) {
+      console.error("Error changing component:", error);
+    }
+  };
+  
   const RenderedComponent = components[currentComponent];
 
   const toggleDrawer = () => {
     setDrawerOpen(!drawerOpen);
   };
 
+
   return (
     <Fragment>
       <div className="content" style={{ marginLeft: drawerWidth, marginTop: "-2px" }}>
-        <div className="bg-gray-800">
+        <div className="bg-blue-600">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="flex h-16 items-center justify-between">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <img
-                    className="h-8 w-8"
-                    src="https://tailwindui.com/img/logos/mark.svg?color=indigo&shade=500"
-                    alt="Your Company"
-                  />
+                
+                  <img   className="h-8  w-8 object-cover rounded-full ml-4"src={`http://localhost:9000/Images/users/${info.image}`}alt="" />
                 </div>
                 <div className="hidden md:block">
                   <div className="ml-10 flex items-baseline space-x-4">

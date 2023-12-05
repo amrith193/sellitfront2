@@ -13,6 +13,10 @@ import Register from "./Register";
 import AdminLogin from "./AdminLogin";
 import OrderSummary from "./OrderSummery";
 import SellerPage from "./SellerPage";
+import Newpage from "./Newpage";
+import Sell from "./Seller/SellerMain"
+import Sum from "./Summaryorder"
+import ManageAccountPage from "./ManageAccountPage"
 
 // import Dashboard from './Admin/Dashboard';
 // import Users from './Admin/User';
@@ -32,13 +36,16 @@ export default function AppRouter() {
             element={<Main/>}
 
 
-
+          />
+                <Route
+            path="/sell"
+            element={<Sell/>}
 
 
           />
           <Route path='/' element={<Text />} />
           {/* <Route path='/ad' element={<Test/>} /> */}
-          {/* <Route path='/admin/edit' element={<Edit/>} /> */}
+          
           {/* <Route path='/admin/dasboard' element={<Dashboard/>} />
           <Route path='/admin/user' element={<Users/>} />
           <Route path='/admin/product' element={<Products/>} /> */}
@@ -46,11 +53,15 @@ export default function AppRouter() {
           <Route path='/seller' element={<SellerPage/>} />
           <Route path='/adminlogin' element={<AdminLogin />} />
           <Route path='/order/:id' element={<OrderSummary />} />
+          <Route path='/new' element={<Newpage />} />
+          <Route path='/sum' element={<Sum />} />
        
          
         <Route path="/product/:id" element={<SingleProductView/>} />
         <Route path="/login" element={<SignIn/>} />
         <Route path="/reg" element={<Register/>} />
+        <Route path="/account" element={<ManageAccountPage/>} />
+       
 
 
         </Routes>

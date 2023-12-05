@@ -1,25 +1,24 @@
-
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
 const Table = () => {
   const [data, setData] = useState([]);
-  const [count, setCount] = useState(0); 
+  const [count, setCount] = useState(0);
+
+  const fetchData = async () => {
+    try {
+      const response = await axios.get('http://localhost:9000/api/register/view');
+      setData(response.data);
+      // Increment count to trigger a state update
+      setCount((prevCount) => prevCount + 1);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await axios.get('http://localhost:9000/api/register/view');
-        setData(response.data);
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      }
-    };
-    setCount(prevCount => prevCount + 1);
     fetchData();
-  }, []); // Empty dependency array to run the effect only once when the component mounts
-
-  
+  }, []);
 
   const handleDelete = async (itemId) => {
     try {
@@ -30,11 +29,10 @@ const Table = () => {
       }
 
       await axios.delete(`http://localhost:9000/api/register/delete/${itemId}`);
-
-      // After successful deletion, you may want to fetch the updated data
+      // Increment count to trigger a state update
+      setCount((prevCount) => prevCount + 1);
+      // Fetch data again after deletion
       fetchData();
-
-  
     } catch (error) {
       console.error('Error deleting item:', error);
     }
@@ -44,15 +42,15 @@ const Table = () => {
     <div className="container mx-auto mt-10">
       <table className="min-w-full bg-white border border-gray-300">
         {/* ... (same as your previous code) */}
-              <thead>
-           <tr>
-             <th className="py-2 px-4 border-b">SL No</th>
-             <th className="py-2 px-4 border-b">Name</th>
-             <th className="py-2 px-4 border-b">Image</th>
-             <th className="py-2 px-4 border-b">Phone</th>
-             <th className="py-2 px-4 border-b">Email</th>
-             <th className="py-2 px-4 border-b">Actions</th>
-           </tr>
+        <thead>
+          <tr>
+            <th className="py-2 px-4 border-b">SL No</th>
+            <th className="py-2 px-4 border-b">Name</th>
+            <th className="py-2 px-4 border-b">Image</th>
+            <th className="py-2 px-4 border-b">Phone</th>
+            <th className="py-2 px-4 border-b">Email</th>
+            <th className="py-2 px-4 border-b">Actions</th>
+          </tr>
         </thead>
         <tbody>
           {data.map((item, index) => (
@@ -61,7 +59,11 @@ const Table = () => {
               <td className="py-2 px-4 border-b">{index + 1}</td>
               <td className="py-2 px-4 border-b">{item.name}</td>
               <td className="py-2 px-4 border-b">
-                <img src={item.image} alt={item.name} className="h-10 w-10 object-cover rounded-full" />
+                <img
+                  src={`http://localhost:9000/Images/users/${item.image}`}
+                  className="h-10 w-10 object-cover rounded-full"
+                  alt={`User ${index + 1}`}
+                />
               </td>
               <td className="py-2 px-4 border-b">{item.phone}</td>
               <td className="py-2 px-4 border-b">{item.email}</td>
@@ -82,4 +84,3 @@ const Table = () => {
 };
 
 export default Table;
-

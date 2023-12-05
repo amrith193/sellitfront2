@@ -29,6 +29,7 @@ export default function AdminLogin() {
   return (
     <div className="container mx-auto mt-10">
       <div className="max-w-md mx-auto bg-white p-5 rounded-md shadow-md">
+  
         <h1 className="text-2xl font-bold mb-4">Admin Login</h1>
         <label className="block mb-2">Email:</label>
         <input
@@ -50,7 +51,12 @@ export default function AdminLogin() {
         >
           Login
         </button>
+        <h2 className="text-xl font-semibold ml-2 text-blue-800">
+            <Link to='/'>back</Link>
+          </h2>
+      
       </div>
+     
     </div>
   );
 }

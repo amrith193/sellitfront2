@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Axios from "axios";
-import { useParams } from "react-router-dom";
-
+import { useParams,Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 const OrderSummary = () => {
   const [product, setProduct] = useState(null);
   const [shippingAddress, setShippingAddress] = useState("");
@@ -10,50 +10,47 @@ const OrderSummary = () => {
   const [orderStatusMessage, setOrderStatusMessage] = useState("");
   const [seller, setSeller] = useState(null);
   const { id } = useParams();
+  const [count, setCount] = useState(0);
 
-  // Load order information from local storage on component mount
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const storedOrderId = localStorage.getItem("order");
-        if (storedOrderId) {
-          setOrderId(storedOrderId);
+    
+    const storedOrderId = localStorage.getItem("order");
 
-          // Fetch order details
+    if (storedOrderId) {
+      setOrderId(storedOrderId);
+
+      const fetchData = async () => {
+        try {
           const orderResponse = await Axios.get(
             `http://localhost:9000/api/orders/${storedOrderId}`
           );
           const orderData = orderResponse.data;
 
-          console.log("API Response:", orderResponse);
-
           if (orderData) {
             const pid = orderData.product_id;
-            console.log("Product ID:", pid);
 
-            // Fetch product details
             const productResponse = await Axios.get(
               `http://localhost:9000/api/product/single/${pid}`
             );
             const prodData = productResponse.data;
             setProduct(prodData);
-            console.log("Product Info:", prodData);
 
             const sellerId = prodData.seller_id;
 
             if (orderData.status === "processing") {
-              // setOrderStatusMessage("Waiting for order acceptance...");
+
               console.log("Status:", orderData.status);
             } else if (orderData.status === "completed") {
+              localStorage.removeItem("order");
               const sellerResponse = await Axios.get(
                 `http://localhost:9000/api/register/singleview/${sellerId}`
               );
               const sellerData = sellerResponse.data;
               setSeller(sellerData);
-              console.log("seller", sellerData);
               setOrderStatusMessage("Order completed!");
-            } else if (orderData.status === "rejected") {
+            } else if (orderData.status === "cancelled") {
               setOrderStatusMessage("Order rejected.");
+
             } else {
               setOrderStatusMessage("");
             }
@@ -62,21 +59,18 @@ const OrderSummary = () => {
               "Error fetching order information: Order data is missing"
             );
           }
+        } catch (error) {
+          console.error("Error fetching order information:", error);
         }
-      } catch (error) {
-        console.error("Error fetching order information:", error);
-        // Handle the error, e.g., setOrderStatusMessage("Error fetching order information");
-      }
-    };
+      };
 
-    fetchData();
-  }, []);
+      fetchData();
+    }
+  }, [product]);
 
-  // Fetch product details on component mount
   useEffect(() => {
     const fetchProductAndSeller = async () => {
       try {
-        // Fetch product details
         const response = await Axios.get(
           `http://localhost:9000/api/product/single/${id}`
         );
@@ -91,9 +85,12 @@ const OrderSummary = () => {
     };
 
     fetchProductAndSeller();
-  }, [id]);
+  }, [id, count]); 
+
   const [isOrderConfirmed, setIsOrderConfirmed] = useState("");
+
   const handleOrder = async () => {
+    
     try {
       const userId = JSON.parse(localStorage.getItem("Seller"))._id;
       const sellerId = JSON.parse(localStorage.getItem("Seller"))._id;
@@ -122,11 +119,22 @@ const OrderSummary = () => {
 
       setOrderStatusMessage("Waiting for order acceptance...");
       console.log("Order request response:", response.data);
+
+
+      setCount((prevCount) => prevCount + 1);
     } catch (error) {
       console.error("Error placing order:", error);
     }
   };
-console.log("s",orderStatusMessage);
+
+  
+  console.log("s", orderStatusMessage);
+  const nav = useNavigate();
+  const back =()=>{
+  
+    nav('/')
+  }
+
   return (
     <div className="max-w-md mx-auto bg-white shadow-lg p-6 rounded-md">
       <h2 className="text-2xl font-semibold mb-4">Order Summary</h2>
@@ -168,7 +176,6 @@ console.log("s",orderStatusMessage);
         </div>
       )}
 
-     
       {/* Shipping Address */}
       {!isOrderConfirmed && orderStatusMessage !== "Order completed!" && (
         <div className="mt-4">
@@ -209,9 +216,8 @@ console.log("s",orderStatusMessage);
         </div>
       )}
 
-
       {/* Confirm Order Button */}
-   
+      {!isOrderConfirmed && orderStatusMessage !== "Order completed!" && (
         <div className="mt-6">
           <button
             onClick={handleOrder}
@@ -221,7 +227,34 @@ console.log("s",orderStatusMessage);
           </button>
           {/* ... rest of your buttons ... */}
         </div>
- 
+      )}
+   
+      {/* Display additional message for completed status */}
+      {orderStatusMessage === "Order completed!" && (
+        <div className="mt-4 text-green-500">
+          <p>Your order has been completed successfully!</p>
+        </div>
+      )}
+      <button
+      onClick={back}
+      className="bg-white-500 hover:bg-white-700 text-blue font-bold py-2 px-2 rounded inline-flex items-center"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        className="h-4 w-6 mr-1"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2"
+          d="M8 19l-7-7m0 0l7-7m-7 7h18"
+        />
+      </svg>
+      Back
+    </button>
     </div>
   );
 };

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import Axios from "axios";
 
 const EditModal = ({ product, onClose }) => {
   const [editedProduct, setEditedProduct] = useState({
@@ -11,30 +12,50 @@ const EditModal = ({ product, onClose }) => {
     condition: product.condition,
    
   });
+  const [products, setProducts] = useState([]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setEditedProduct((prevProduct) => ({
-      ...prevProduct,
-      [name]: value,
-    }));
+    setEditedProduct((prevProduct) => {
+      console.log("Previous State:", prevProduct);
+      console.log("Updated State:", { ...prevProduct, [name]: value });
+      return { ...prevProduct, [name]: value };
+    });
   };
+  
+  const [Images, setimages] = useState({
+    image1: [],
+  });
+  const handlefilechangeedit = (e, index) => {
+    const image = [...Images.image1];
+    image[index] = e.target.files[0];
+    setimages({ ...Images, image1: image });
+    console.log("xc",image);
+  };
+ 
+
 
   const handleEditSubmit = async () => {
     try {
-     
+      const formData = new FormData();
+      Images.image1.map((item) => {
+        formData.append("productImage", item);
+      });
       await axios.put(
         `http://localhost:9000/api/product/edit/${product._id}`,
         editedProduct
       );
-    
+  
+      // Fetch updated data and set it to the products state
+      const response = await axios.get("http://localhost:9000/api/product/view");
+      setProducts(response.data);
+  
       onClose();
     } catch (error) {
       console.error("Error editing product:", error);
     }
   };
-
-
+  
 
   
 
@@ -150,6 +171,9 @@ const EditModal = ({ product, onClose }) => {
               className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
             />
           </div>
+          <input type="file" name="img1" onChange={(e) => handlefilechangeedit(e, 0)} />
+          <input type="file" name="img2"  onChange={(e) => handlefilechangeedit(e, 1)} />
+          <input type="file" name="img3" onChange={(e) => handlefilechangeedit(e, 2)} />
           <div className="flex justify-end">
             <button
               type="button"
@@ -206,23 +230,198 @@ const Products = () => {
   };
   const handleDelete = async (productId) => {
     try {
-      
-      const confirmDelete = window.confirm('Are you sure you want to delete this product?');
+      const confirmDelete = window.confirm("Are you sure you want to delete this product?");
       if (!confirmDelete) {
-        return; 
+        return;
       }
-  
+
       await axios.delete(`http://localhost:9000/api/product/delete/${productId}`);
-  
-   
-    
+
+      // Update the state after deletion
+      setProducts((prevProducts) => prevProducts.filter((product) => product._id !== productId));
     } catch (error) {
-      console.error('Error deleting item:', error.message, error.stack);
+      console.error("Error deleting item:", error.message, error.stack);
+    }
+  };
+  //Add
+  const [form, setForm] = useState({});
+  const [categories, setCategories] = useState([]);
+  const [selectedCat, setSelectedCat] = useState("");
+  const [user, setUser] = useState("");
+  const [Images, setimages] = useState({
+    image1: [],
+  });
+
+  const handlefilechange = (e, index) => {
+    const image = [...Images.image1];
+    image[index] = e.target.files[0];
+    setimages({ ...Images, image1: image });
+  };
+
+  useEffect(() => {
+    Axios.get("http://localhost:9000/api/category/view")
+      .then((res) => {
+        setCategories(res.data);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  }, []);
+
+  const handleInputChangeAdd = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+
+  const handleImageChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.files[0] });
+  };
+
+  const handleCategoryChange = (event) => {
+    setSelectedCat(event.target.value);
+  };
+
+  useEffect(() => {
+    if (localStorage.getItem("Token") === null) {
+      navigate("/login");
+    } else {
+      setUser(JSON.parse(localStorage.getItem("Token")));
+    }
+  }, []);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const formData = new FormData();
+    Images.image1.map((item) => {
+      formData.append("productImage", item);
+    });
+    formData.append("name", form.name);
+    formData.append("description", form.description);
+    formData.append("brand", form.brand);
+    formData.append("price", form.price);
+    formData.append("stock", form.stock);
+    formData.append("condition", form.condition);
+    formData.append("category", selectedCat);
+  
+    try {
+      await axios.post("http://localhost:9000/api/product/insertadmin", formData, {
+        headers: { Token: user },
+      });
+  
+      // Fetch updated data and set it to the products state
+      const response = await axios.get("http://localhost:9000/api/product/view");
+      setProducts(response.data);
+  
+      // setForm({});
+    } catch (err) {
+      console.error("Error adding product:", err);
     }
   };
   
   return (
-    <div className="container mx-auto mt-10">
+    <div className="container mx-auto mt-2">
+
+<div className="bg-white p-6 rounded shadow-md">
+        <h1 className="text-3xl font-bold mb-4 text-center text-blue-500">
+          <b>INPUT FORM</b>
+        </h1>
+        <form className="grid grid-cols-3 gap-5">
+          {/* Other input fields */}
+          <input
+            type="text"
+            id="name"
+            name="name"
+            onChange={handleInputChangeAdd}
+            placeholder="Enter name"
+            className="p-2 border rounded"
+          />
+          <input
+            type="text"
+            id="description"
+            name="description"
+            onChange={handleInputChangeAdd}
+            placeholder="Enter description"
+            className="p-2 border rounded"
+          />
+
+          <input
+            type="text"
+            id="brand"
+            name="brand"
+            onChange={handleInputChangeAdd}
+            placeholder="Enter brand"
+            className="p-2 border rounded"
+          />
+          <input
+            type="number"
+            id="price"
+            name="price"
+            onChange={handleInputChangeAdd}
+            placeholder="Enter price"
+            className="p-2 border rounded"
+          />
+
+          <input
+            type="number"
+            id="stock"
+            name="stock"
+            onChange={handleInputChangeAdd}
+            placeholder="Enter stock"
+            className="p-2 border rounded"
+          />
+          <input
+            type="text"
+            id="condition"
+            name="condition"
+            onChange={handleInputChangeAdd}
+            placeholder="Enter condition"
+            className="p-2 border rounded"
+          />
+          {/* <input
+            type="file"
+            id="productImage"
+            name="productImage"
+            onChange={(e) => handleImageChange(e)}
+            placeholder="Select product image"
+            className="p-2 border rounded"
+          /> */}
+          <input type="file" name="img1" onChange={(e) => handlefilechange(e, 0)} />
+          <input type="file" name="img2"  onChange={(e) => handlefilechange(e, 1)} />
+          <input type="file" name="img3" onChange={(e) => handlefilechange(e, 2)} />
+
+          {/* ... (repeat for other input fields) */}
+
+          {/* Category Select */}
+          {categories && categories.length > 0 && (
+            <select
+              value={selectedCat}
+              onChange={handleCategoryChange}
+              className="p-2 border rounded w-full"
+            >
+              <option value="" disabled>
+                Select category
+              </option>
+              {categories.map((item) => (
+                <option key={item._id} value={item._id}>
+                  {item.name}
+                </option>
+              ))}
+            </select>
+          )}
+
+          {/* Submit Button */}
+          <div className="col-span-2 flex justify-end">
+            <button
+              type="button"
+              onClick={handleSubmit}
+              className="bg-green-500 text-white p-2 rounded cursor-pointer"
+            >
+              Submit
+            </button>
+          </div>
+        </form>
+      </div>
+
       <table className="min-w-full bg-white border border-gray-300">
         <thead>
           <tr>
